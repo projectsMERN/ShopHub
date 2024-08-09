@@ -42,7 +42,7 @@ exports.fetchOrdersByUser = async (req, res) => {
        sendMail({to:user.email,html:invoiceTemplate(order),subject:'Order Received' })
        
       //Send mail to admin team
-      sendMail({to:'facilities.mumbai@tataplayfiber.com',html:adminInvoiceTemplate(order, user.email),subject:'Order Received' })
+      sendMail({to:'facilities.mumbai@tataplayfiber.com',html:adminInvoiceTemplate(order, user.email),subject:'ShopHub- Order Received' })
       res.status(201).json(doc);
     } catch (err) {
       res.status(400).json(err);
@@ -69,6 +69,7 @@ exports.fetchOrdersByUser = async (req, res) => {
       const user = await User.findById(order.user)
       userEmail=user.email;
       sendMail({to:userEmail,html:DeliveryStatus(order, userEmail),subject:'ShopHub- Delivery Status' })
+      sendMail({to:'facilities.mumbai@tataplayfiber.com',html:DeliveryStatus(order, userEmail),subject:'ShopHub- Delivery Status' })
       res.status(200).json(order);
     } catch (err) {
       res.status(400).json(err);
