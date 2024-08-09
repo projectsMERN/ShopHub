@@ -185,7 +185,6 @@ passport.use(
         const token = jwt.sign(sanitizeUser(user), process.env.JWT_SECRET_KEY);
         return done(null, { id: user.id, role: user.role, token });
       }
-
       let userInDB = await User.findOne({ email });
       if(userInDB) {
         crypto.pbkdf2(
@@ -206,61 +205,86 @@ passport.use(
           }
         );
       }
+
+      else {
+        // Generate access token
+        const accessToken = await generateAccessToken();
+        // Fetch employee records from Zoho
+        // const employeeRecords = await fetchEmployeeRecords(accessToken);
+        const employeeRecords = await fetchAllEmployeeRecords(accessToken);
+        // Get email from Zoho records
+        const emailFromZoho = getEmailByOfficialName(employeeRecords, email);
+        if (!emailFromZoho) {
+          return done(null, false, { message: 'Email not found in Zoho records' });
+        }
+
+        // Check if the user exists in the database
+        let user = await User.findOne({ email: emailFromZoho });
+        const tempPass = "tataPlayUser$@!qwr";
+
+        if (user === null) {
+          // Create a new user if not exists
+          const salt = crypto.randomBytes(16);
+          crypto.pbkdf2(
+            tempPass,
+            salt,
+            310000,
+            32,
+            'sha256',
+            async function (err, hashedPassword) {
+              if (err) {
+                return done(err);
+              }
+              const userDetails = currentLoggedInUserDetails(employeeRecords, emailFromZoho);
+
+              const lowerValue = userDetails.Expense_Policy1.toLowerCase().trim();
+              let jRole = ''
+              if (lowerValue.includes('non field')) {
+                jRole = 'nonField';
+              } else {
+                jRole = 'field';
+              }  
+    
+              user = new User({ email: emailFromZoho, password: hashedPassword, salt, verified: true,  
+                addresses : [{
+                  name: userDetails.Official_Name,
+                  email: userDetails.EmailID,
+                  phone: userDetails.Mobile,
+                  street: userDetails.Current_Address1,
+                  city: userDetails.Work_location,
+                  state: userDetails.Work_location,
+                  pinCode: userDetails.Current_Pincode
+                }],
+                jobRole: jRole
+              });
+              await user.save();
+              const token = jwt.sign(sanitizeUser(user), process.env.JWT_SECRET_KEY);
+              return done(null, { id: user.id, role: user.role, token });
+            }
+          );
+        } else {
+          // Validate the password
+          crypto.pbkdf2(
+            password,
+            user.salt,
+            310000,
+            32,
+            'sha256',
+            async function (err, hashedPassword) {
+              if (err) {
+                return done(err);
+              }
+              // if (!crypto.timingSafeEqual(user.password, hashedPassword)) {
+              //   return done(null, false, { message: 'Invalid credentials' });
+              // }
+              const token = jwt.sign(sanitizeUser(user), process.env.JWT_SECRET_KEY);
+              done(null, { id: user.id, role: user.role, token });
+            }
+          );
+        }
+      }
       
-      // Generate access token
-      const accessToken = await generateAccessToken();
-      // Fetch employee records from Zoho
-      // const employeeRecords = await fetchEmployeeRecords(accessToken);
-      const employeeRecords = await fetchAllEmployeeRecords(accessToken);
-      // Get email from Zoho records
-      const emailFromZoho = getEmailByOfficialName(employeeRecords, email);
-      if (!emailFromZoho) {
-        return done(null, false, { message: 'Email not found in Zoho records' });
-      }
-
-      // Check if the user exists in the database
-      let user = await User.findOne({ email: emailFromZoho });
-      const tempPass = "tataPlayUser$@!qwr";
-
-      if (user === null) {
-        // Create a new user if not exists
-        const salt = crypto.randomBytes(16);
-        crypto.pbkdf2(
-          tempPass,
-          salt,
-          310000,
-          32,
-          'sha256',
-          async function (err, hashedPassword) {
-            if (err) {
-              return done(err);
-            }
-            user = new User({ email: emailFromZoho, password: hashedPassword, salt, verified: true });
-            await user.save();
-            const token = jwt.sign(sanitizeUser(user), process.env.JWT_SECRET_KEY);
-            return done(null, { id: user.id, role: user.role, token });
-          }
-        );
-      } else {
-        // Validate the password
-        crypto.pbkdf2(
-          password,
-          user.salt,
-          310000,
-          32,
-          'sha256',
-          async function (err, hashedPassword) {
-            if (err) {
-              return done(err);
-            }
-            // if (!crypto.timingSafeEqual(user.password, hashedPassword)) {
-            //   return done(null, false, { message: 'Invalid credentials' });
-            // }
-            const token = jwt.sign(sanitizeUser(user), process.env.JWT_SECRET_KEY);
-            done(null, { id: user.id, role: user.role, token });
-          }
-        );
-      }
+      
     } catch (err) {
       done(err);
     }
