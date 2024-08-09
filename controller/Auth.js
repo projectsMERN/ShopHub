@@ -309,7 +309,7 @@ exports.otpVerification = async (req, res) => {
   const email = req.query.email;
 
   // Send a confirmation mail to user
-  const subject = 'EmphoriumX- Verification OTP';
+  const subject = 'ShopHub- Verification OTP';
   // const html = `<p>You OTP is: '${otp}'</p>`;
   const html = generateOTPHTML(otp);
   console.log(otp)
