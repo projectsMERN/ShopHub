@@ -38,11 +38,19 @@ exports.fetchOrdersByUser = async (req, res) => {
 
       const doc = await order.save();
       const user = await User.findById(order.user)
+
+      let isAddressDifferent = false
+      const selectedAddressInOrder = order.selectedAddress.street
+      const atualUserAddress = user.addresses[0].street;
+      if(selectedAddressInOrder != atualUserAddress) {
+        isAddressDifferent = true;
+      }
+        
        // we can use await for this also 
-       sendMail({to:user.email,html:invoiceTemplate(order),subject:'Order Received' })
+       sendMail({to:user.email,html:invoiceTemplate(order, isAddressDifferent),subject:'Order Received' })
        
       //Send mail to admin team
-      sendMail({to:'facilities.mumbai@tataplayfiber.com',html:adminInvoiceTemplate(order, user.email),subject:'ShopHub- Order Received' })
+      sendMail({to:'facilities.mumbai@tataplayfiber.com',html:adminInvoiceTemplate(order, user.email, isAddressDifferent),subject:'ShopHub- Order Received' })
       res.status(201).json(doc);
     } catch (err) {
       res.status(400).json(err);
