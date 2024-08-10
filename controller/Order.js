@@ -159,6 +159,7 @@ exports.exportUserOrders = async (req, res) => {
   let query = Order.find({deleted:{$ne:true}});
   let totalOrdersQuery = Order.find({deleted:{$ne:true}});
 
+  query = query.sort({ createdAt: -1 });
   
   if (req.query._sort && req.query._order) {
     query = query.sort({ [req.query._sort]: req.query._order });
