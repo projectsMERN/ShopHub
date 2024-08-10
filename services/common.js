@@ -52,6 +52,10 @@ exports.sendMail = async function ({to, subject, text, html}){
 }
 
 exports.invoiceTemplate = function(order){
+  let addressChange = "Delivery Address"
+  if(isAddressDifferent) {
+    addressChange = `Delivery Address- <span style="background-color: yellow;">*(Alternate address selected)</span>`
+  }
 
  return (`<!DOCTYPE html>
 <html>
@@ -299,7 +303,7 @@ exports.invoiceTemplate = function(order){
                 <table align="left" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 300px;">
                   <tr>
                     <td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
-                      <p><strong>Delivery Address</strong></p>
+                      <p><strong>${addressChange}</strong></p>
                       <p>${order.selectedAddress.name}<br>${order.selectedAddress.street}<br>${order.selectedAddress.city},${order.selectedAddress.state},${order.selectedAddress.pinCode}</p>
                       <p>${order.selectedAddress.phone}</p>
 
@@ -359,8 +363,12 @@ exports.invoiceTemplate = function(order){
  )
 }
 
-exports.adminInvoiceTemplate = function(order, userEmail){
-
+exports.adminInvoiceTemplate = function(order, userEmail, isAddressDifferent){
+  let addressChange = "Delivery Address"
+  if(isAddressDifferent) {
+    addressChange = `Delivery Address- <span style="background-color: yellow;">*(Alternate address selected)</span>`
+  }
+  
   return (`<!DOCTYPE html>
  <html>
  <head>
@@ -607,7 +615,7 @@ exports.adminInvoiceTemplate = function(order, userEmail){
                  <table align="left" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 300px;">
                    <tr>
                      <td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
-                       <p><strong>Delivery Address</strong></p>
+                       <p><strong>${addressChange}</strong></p>
                        <p>${order.selectedAddress.name}<br>${order.selectedAddress.street}<br>${order.selectedAddress.city},${order.selectedAddress.state},${order.selectedAddress.pinCode}</p>
                        <p>Customer Email: ${userEmail}</p>
                        <p>Customer Phone Number: ${order.selectedAddress.phone}</p>
@@ -669,7 +677,12 @@ exports.adminInvoiceTemplate = function(order, userEmail){
  }
 
  exports.DeliveryStatus = function(order, userEmail){
-
+  let deliveryStatus = order.status;
+  let emailHeader = "is on the way";
+  if(deliveryStatus == 'delivered') {
+    emailHeader = "has been delivered"
+  }
+   
   return (`<!DOCTYPE html>
  <html>
  <head>
@@ -822,7 +835,7 @@ exports.adminInvoiceTemplate = function(order, userEmail){
          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
            <tr>
              <td align="left" bgcolor="#ffffff" style="padding: 36px 24px 0; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; border-top: 3px solid #d4dadf;">
-               <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 48px;">Your order is on the way</h1>
+               <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 48px;">Your order ${emailHeader}</h1>
                <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 48px;">Order Status: ${order.status}</h1>
                <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 48px;">Track your Order: ${order.paymentStatus}</h1>
              </td>
