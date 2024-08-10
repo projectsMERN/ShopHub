@@ -51,7 +51,7 @@ exports.sendMail = async function ({to, subject, text, html}){
     return info;  
 }
 
-exports.invoiceTemplate = function(order){
+exports.invoiceTemplate = function(order, isAddressDifferent){
   let addressChange = "Delivery Address"
   if(isAddressDifferent) {
     addressChange = `Delivery Address- <span style="background-color: yellow;">*(Alternate address selected)</span>`
